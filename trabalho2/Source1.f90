@@ -2,12 +2,12 @@ PROGRAM trabalho
     IMPLICIT NONE
     
     CHARACTER*20 titulo
-    CHARACTER*80 detalhes
+    CHARACTER*96 detalhes
     INTEGER arq1, arq2, numnos, numele, i, j, k, l
     INTEGER noi[ALLOCATABLE](:) , nof[ALLOCATABLE](:)
-    REAL*8 compx, compy, val1, val2, val3, val4, val5, cosE, senE
-    REAL*8 comp[ALLOCATABLE](:), mate[ALLOCATABLE](:), larg[ALLOCATABLE](:), altu[ALLOCATABLE](:)
-    REAL*8 posx[ALLOCATABLE](:), posy[ALLOCATABLE](:), area[ALLOCATABLE](:), iner[ALLOCATABLE](:)
+    REAL*8 val1, val2, val3, val4, val5, cosE, senE
+    REAL*8 mate[ALLOCATABLE](:), larg[ALLOCATABLE](:), altu[ALLOCATABLE](:), area[ALLOCATABLE](:), iner[ALLOCATABLE](:)
+    REAL*8 posx[ALLOCATABLE](:), posy[ALLOCATABLE](:), compx[ALLOCATABLE](:), compy[ALLOCATABLE](:), comp[ALLOCATABLE](:)
     DOUBLE PRECISION mrloc(6,6), mrot(6,6), mrott(6,6), mrelglo(6,6), maux(6,6)
     
     arq1 = 1
@@ -30,7 +30,7 @@ PROGRAM trabalho
     READ(arq1,*)
     
     READ(arq1,'(A)') detalhes
-    WRITE(arq2,*) detalhes
+    WRITE(arq2,'(A)') detalhes
     
     ALLOCATE(mate(numele), larg(numele), altu(numele), noi(numele), nof(numele))
     
@@ -49,7 +49,7 @@ PROGRAM trabalho
     
     READ(arq1,*)
     READ(arq1,'(A)') detalhes
-    WRITE(arq2,*) detalhes
+    WRITE(arq2,'(A)') detalhes
     
     ALLOCATE(posx(numnos), posy(numnos))
     
@@ -59,13 +59,15 @@ PROGRAM trabalho
         WRITE(arq2,11) j, posx(j), posy(j)
     ENDDO
     
-    ALLOCATE(area(numele), iner(numele), comp(numele))
+    ALLOCATE(area(numele), iner(numele), compx(numele), compy(numele), comp(numele))
     
     ! Calcular area, inercia e comprimento pra cada elemento, assim como sua matriz de rigidez e de rotacao
     DO i=1, numele
-        area(i) = larg(i) * altu(i)
-        iner(i) = larg(i) * (altu(i) ** 3)
-        comp(i) = (((posx(nof(i)) - posx(noi(i))) ** 2) + ((posy(nof(i)) - posy(noi(i))) ** 2)) ** 0.5
+        area(i) = altu(i) * larg(i)
+        iner(i) = altu(i) * (larg(i) ** 3) / 12
+        compx(i) = posx(nof(i)) - posx(noi(i))
+        compy(i) = posy(nof(i)) - posy(noi(i))
+        comp(i) = ((compx(i) ** 2) + (compy(i) ** 2)) ** 0.5
         
         val1 = mate(i) * area(i) / comp(i)
         val2 = 12 * mate(i) * iner(i) / (comp(i) ** 3)
@@ -168,28 +170,31 @@ PROGRAM trabalho
         
         WRITE(arq2,*)
         WRITE(arq2,*)
-        WRITE(arq2,*)
         
         WRITE(arq2,18) 'ELEMENTO', i
         WRITE(arq2,*)
         
-        WRITE(arq2,'(A)') 'COMPRIMENTO(m)       COSSENO         SENO        AREA(m2)        MINERCIA(m4)        MELASTICIDADE(N/m2)'
+        WRITE(arq2,'(A)') 'COMPRIMENTO (m) COSSENO         SENO            AREA (m2)       MINERCIA (m4)   MELASTICIDADE (N/m2)'
+        WRITE(arq2,*)
         WRITE(arq2,17) comp(i), cosE, senE, area(i), iner(i), mate(i)
         WRITE(arq2,*)
         
         WRITE(arq2,14) 'MATRIZ DE RIGIDEZ LOCAL DO ELEMENTO ', i
+        WRITE(arq2,*)
         DO k=1, 6
             WRITE(arq2, 13) mrloc(k,1), mrloc(k,2), mrloc(k,3), mrloc(k,4), mrloc(k,5), mrloc(k,6)
         ENDDO
         WRITE(arq2,*)
         
         WRITE(arq2,15) 'MATRIZ DE ROTACAO DO ELEMENTO ', i
+        WRITE(arq2,*)
         DO k=1, 6
             WRITE(arq2, 13) mrot(k,1), mrot(k,2), mrot(k,3), mrot(k,4), mrot(k,5), mrot(k,6)
         ENDDO
         WRITE(arq2,*)
         
         WRITE(arq2,16) 'MATRIZ DE ROTACAO TRANSPOSTA DO ELEMENTO ', i
+        WRITE(arq2,*)
         DO k=1, 6
             WRITE(arq2, 13) mrott(k,1), mrott(k,2), mrott(k,3), mrott(k,4), mrott(k,5), mrott(k,6)
         ENDDO
@@ -214,6 +219,7 @@ PROGRAM trabalho
         ENDDO
         
         WRITE(arq2,14) 'MATRIZ DE RIGIDEZ GLOBAL DO ELEMENTO ', i
+        WRITE(arq2,*)
         DO k=1, 6
             WRITE(arq2, 13) mrelglo(k,1), mrelglo(k,2), mrelglo(k,3), mrelglo(k,4), mrelglo(k,5), mrelglo(k,6)
         ENDDO
@@ -224,13 +230,13 @@ PROGRAM trabalho
     CLOSE(arq2)
     
 10 FORMAT(3x,3a8)    
-11 FORMAT(1i3,2f9.2)
-12 FORMAT(3i12,3f18.3)
-13 FORMAT(6f20.3)
+11 FORMAT(1i16,2f16.3)
+12 FORMAT(3i16,3f16.3)
+13 FORMAT(6f16.3)
 14 FORMAT(a37,i2)
 15 FORMAT(a30,i2) 
 16 FORMAT(a41,i2)
-17 FORMAT(5f14.3,es25.4)
+17 FORMAT(es16.3,2f16.3,3es16.3)
 18 FORMAT(a8, i2)   
     
 END PROGRAM trabalho
